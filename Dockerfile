@@ -4,6 +4,7 @@ FROM golang:alpine AS shfmt
 LABEL name="shfmt"
 LABEL version="2.5.1"
 
+
 ENV GOOS linux
 ENV CGO_ENABLED 0
 ENV SHFMT_VERSION 2.5.1
