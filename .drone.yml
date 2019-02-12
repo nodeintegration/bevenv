@@ -2,14 +2,26 @@
 pipeline: default
 name: default
 steps:
-- name: docker build
-  image: plugins/docker
+- name: build
+  image: docker
+  command:
+    - docker build -t nodeintegration/bevenv:${DRONE_BRANCH}-${DRONE_BUILD_NUMBER}
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
   settings:
     username:
       from_secret: dockerhub_username
     password:
       from_secret: dockerhub_password
-    repo: nodeintegration/bevenv
-    tags:
-      - 1.0.1
-    dry_run: true
+- name: test
+  image: docker
+  command:
+    - docker run -t nodeintegration/bevenv:${DRONE_BRANCH}-${DRONE_BUILD_NUMBER} echo "yay"
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  settings:
+    username:
+      from_secret: dockerhub_username
+    password:
+      from_secret: dockerhub_password
+
