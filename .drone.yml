@@ -1,0 +1,15 @@
+---
+pipeline: default
+name: default
+steps:
+- name: docker build
+  image: plugins/docker
+  settings:
+    username:
+      from_secret: dockerhub_username
+    password:
+      from_secret: dockerhub_password
+    repo: nodeintegration/bevenv
+    tags:
+      - 1.0.1
+    dry_run: true
