@@ -48,11 +48,7 @@ RUN apk add --no-cache curl \
     && chmod ugo+x /tmp/bin/minikube
 ###
 RUN mkdir /tmp/home
-COPY config/.gitignore /tmp/home/
 COPY config/bootstrap /tmp/home/
-COPY config/Jenkinsfile /tmp/home/
-COPY config/Makefile.template /tmp/home/
-COPY config/testing /tmp/home/
 ###########################################################################################
 
 # Resulting image
@@ -71,7 +67,7 @@ RUN apk update && apk add --no-cache openssl ca-certificates curl libgcc && \
     rm /etc/apk/keys/sgerrand.rsa.pub glibc-$GLIBC.apk
 
 # Copy things
-COPY config/requirements.txt /
+#COPY config/requirements.txt /
 
 # Base components
 ENV FIXUID_VERSION="0.4" \
@@ -88,7 +84,6 @@ RUN apk add --no-cache \
     && mkdir /tmp/grpcurl \
     && tar -zxvf /tmp/grpcurl.tar.gz -C /tmp/grpcurl/ \
     && mv /tmp/grpcurl/grpcurl /usr/local/bin \
-    && pip3 install -r /requirements.txt \
     && ln -s /opt/bats/bin/bats /usr/local/bin/bats \
     && curl -SsL "https://github.com/boxboat/fixuid/releases/download/v${FIXUID_VERSION}/fixuid-${FIXUID_VERSION}-linux-amd64.tar.gz" | tar -C /usr/local/bin -xzf - \
     && echo "${FIXUID_SHA256}  /usr/local/bin/fixuid" | sha256sum -c \
