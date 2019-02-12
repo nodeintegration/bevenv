@@ -1,0 +1,84 @@
+function deploy-helper() {
+  export DEPLOY_HELPER_TAG=${DEPLOY_HELPER_TAG:-$DEPLOY_HELPER_LAUNCH_TAG}
+  export DEPLOY_HELPER_INTERACTIVE=${DEPLOY_HELPER_INTERACTIVE:-true}
+  local DEPLOY_HELPER_EXTRA_OPTS=''
+  local CACHE=${CACHE:-${HOME}/.fetch_cache}
+  if [ ! -d "${CACHE}" ]; then
+    mkdir -p ${CACHE}
+  fi
+
+  if [ "${DEPLOY_HELPER_INTERACTIVE}" == 'true' ]; then
+    DEPLOY_HELPER_EXTRA_OPTS+=' -it'
+  fi
+
+  DOCKER_CONFIG=${DOCKER_CONFIG:-${HOME}/.docker}
+
+  # Generate env file args if file present
+  local env_file='./.deploy-helper-env'
+  local env_file_args=''
+  local additional_envs_args=''
+  # We do NOT want to use --env-file for docker
+  # Reason being that if you dont assign a value in the envfile, it gets
+  # exported as FOO='', this is obviously problematic if you want things like Make
+  # to use default values if not assigned.
+  # So instead we add it to -e FOO=${default_in_file:-${shell_value}
+  if [ -f "${env_file}" ]; then
+    #env_file_args="--env-file ${env_file}"
+    # Slurp environment variables from shell that exist in env_file
+    for e in $(cut -d '=' -f 1 < ${env_file} | grep -v '^#'); do
+      if [ ! -z ${!e+x} ]; then
+        additional_envs_args+=" -e ${e}"
+      else
+        v=$(grep "^${e}=" ${env_file} | cut -d '=' -f 2)
+        if [ -n "${v}" ]; then
+          additional_envs_args+=" -e ${e}=\"${v}\""
+        fi
+      fi
+    done
+  fi
+
+  export BH_BUILD_ENVS_ARGS=''
+  # Generate env file args if file present
+  local env_file_build='./.deploy-helper-build-env'
+  if [ -f "${env_file_build}" ]; then
+    # Slurp environment variables from shell that exist in env_file
+    for e in $(cut -d '=' -f 1 < ${env_file_build} | grep -v '^#'); do
+      if [ ! -z ${!e+x} ]; then
+        BH_BUILD_ENVS_ARGS+=" --build-arg ${e}"
+        additional_envs_args+=" -e ${e}"
+      fi
+    done
+    additional_envs_args+=" -e BH_BUILD_ENVS_ARGS"
+  fi
+
+  docker run --rm \
+    -u $(id -u):$(id -g) \
+    -v ${DOCKER_CONFIG}:/home/dlt/.docker:ro \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v ${HOME}/.m2:/home/dlt/.m2:ro \
+    -v ${HOME}/.pip:/home/dlt/.pip:ro \
+    -v ${HOME}/.netrc:/home/dlt/.netrc:ro \
+    -v ${HOME}/.config/gcloud:/home/.config/gcloud \
+    -v ${PWD}:/home/dlt/workspace \
+    -v ${CACHE}:/home/dlt/.fetch_cache \
+    -v /tmp:/tmp \
+    ${DEPLOY_HELPER_EXTRA_OPTS} \
+    -e PARENT_PWD=${PWD} \
+    -e ARTIFACTORY_LOGIN \
+    -e ARTIFACTORY_TOKEN \
+    -e LOG_LEVEL \
+    -e DOCKER_IGNORE_CACHE \
+    -e DOCKER_CACHE_ARG \
+    -e DOCKER_EXTRA_TAGS \
+    -e DOCKER_IMAGE_PREFIX \
+    -e DOCKER_IMAGE_REGISTY \
+    -e DOCKER_VERSION \
+    -e LATEST \
+    -e CACHE \
+    -e PROJECT_NAME \
+    ${additional_envs_args} \
+    ${env_file_args} \
+    digitalasset/deploy-helper:${DEPLOY_HELPER_TAG} \
+    ${@}
+}
+

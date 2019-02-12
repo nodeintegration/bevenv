@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+cat << EOF
+export DEPLOY_HELPER_LAUNCH_TAG=\$(docker ps -a --filter 'id=${HOSTNAME}' --format {{.Image}} |cut -f 2 -d :)
+echo Binding to tag \${DEPLOY_HELPER_LAUNCH_TAG}
+EOF
+cat ${HOME}/bootstrap
