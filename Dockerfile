@@ -110,3 +110,4 @@ COPY --chown=dlt:dlt config/entrypoint.sh /
 ENTRYPOINT [ "/entrypoint.sh" ]
 WORKDIR ${HOME}/workspace
 
+
